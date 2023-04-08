@@ -5,11 +5,9 @@ using System.Text;
 
 namespace ConsoleApp_Code39
 {
-    internal interface ICodeBarcode
+    internal interface ICodeBarcode // all barcodes must provide text and image
     {
         string Text { get; set; }
         Bitmap Image { get; set; }
-        Bitmap GetBarcode(string textToCode);
-        string GetText(Bitmap barcodeToDecode);
     }
 }
