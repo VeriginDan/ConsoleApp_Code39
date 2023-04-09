@@ -30,14 +30,14 @@ namespace ConsoleApp_Code39
         public Barcode(string textToCode) //We make new object of class based on text and simultaneously obtain barcode from text
         {
             Text = textToCode;
-            Image = GetBarcode(Text);
+            Image = GetImage(Text);
         }
         public Barcode(Bitmap imageToDecode) //We make new object of class based on text and simultaneously obtain barcode from text
         {
             Image = imageToDecode;
             Text = GetText(Image);
         }
-        protected abstract Bitmap GetBarcode(string textToCode);// realization may be different for different code systems
+        protected abstract Bitmap GetImage(string textToCode);// realization may be different for different code systems
         protected abstract string GetText(Bitmap barcodeToDecode);   // realization may be different for different code systems   
     }
 }
