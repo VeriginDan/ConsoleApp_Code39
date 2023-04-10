@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Net.Security;
 using System.Text;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace ConsoleApp_Code39
 {
@@ -110,10 +112,16 @@ namespace ConsoleApp_Code39
         {
         }
 
+        override public string Text
+        {
+            get => _text;
+            set => _text = isValidText(value.ToUpper()) ? value.ToUpper() : "";//Console.WriteLine("Text is not supported to make barcode");
+            // check possibility to code text in barcode. Need to implement Event of Exception here
+        }
+
         protected override Bitmap GetImage(string textToCode)
         {
             // encoding to 01 string
-            textToCode.ToUpper();
             string encodedString = CODE39TABLE['*'];
             foreach (char item in textToCode) encodedString += '0' + CODE39TABLE[item]; // add zero to convert from int code of char to char
             encodedString += '0' + CODE39TABLE['*'];
@@ -155,38 +163,43 @@ namespace ConsoleApp_Code39
             int lineWidth = 2; // in this realization should be the same as in getImage
             int pointX = 0;
             int pointY = barcodeToDecode.Height / 2;
-            while (barcodeToDecode.GetPixel(pointX, pointY) != Color.Black) pointX++; //search first line
+            //while (barcodeToDecode.GetPixel(pointX, pointY).ToArgb() != Color.Black.ToArgb() && pointX < barcodeToDecode.Width) pointX++; //search first line
             
             List <char> decodedString = new List<char>();
             while (pointX < barcodeToDecode.Width)
             {
-                if (DECODE39TABLE.TryGetValue(GetSymbolCoded(barcodeToDecode, ref pointX, ref pointY, lineWidth).ToString(), out char value))
+                while (barcodeToDecode.GetPixel(pointX, pointY).ToArgb() != Color.Black.ToArgb() && pointX < barcodeToDecode.Width) pointX++; //search first line
+                if (DECODE39TABLE.TryGetValue(
+                                                GetSymbolCoded(barcodeToDecode, ref pointX, ref pointY, lineWidth), 
+                                                out char value))
                     decodedString.Add(value);
+                if (decodedString.FindAll(x => x == '*').Count == 2) break;// if we have both start and stop symbols 
             }
 
             decodedString.RemoveAt(decodedString.LastIndexOf('*'));
             decodedString.RemoveAt(decodedString.IndexOf('*'));
-            return decodedString.ToString();
+            return new String(decodedString.ToArray());
         }
-        private char[] GetSymbolCoded(Bitmap barcodeToDecode, ref int pointX, ref int pointY, int lineWidth)//method to read series of lines
+        private string GetSymbolCoded(Bitmap barcodeToDecode, ref int pointX, ref int pointY, int lineWidth)//method to read series of lines
         {
             char[] symbolCoded = new char[15];
             for (int iter = 0; iter < 15; iter++)
             {
-                symbolCoded[iter] = (barcodeToDecode.GetPixel(pointX, pointY) == Color.Black) ? '1' : '0';
+                symbolCoded[iter] = (barcodeToDecode.GetPixel(pointX, pointY).ToArgb() == Color.Black.ToArgb()) ? '1' : '0';
                 pointX += lineWidth;
             }
-            return symbolCoded;    
+            pointX++; //put in next position of coded symbol in barcode
+            return new String(symbolCoded);    
         }
-        protected override bool isImage(Bitmap textToCheck)
+        protected override bool isValidImage(Bitmap imageToCheck) // there should be check that image contain barcode. For easy way we assume we get ideal scan of barcode
         {
-            throw new NotImplementedException();
+            return imageToCheck is Bitmap;
         }
 
-        protected override bool isText(string textToCheck)
+        protected override bool isValidText(string textToCheck)
         {
-            textToCheck.ToUpper();
-            foreach (char item in textToCheck) 
+            string tempString = textToCheck.ToUpper();
+            foreach (char item in tempString) 
                 if (!CODE39TABLE.ContainsKey(item)) return false; // if text do not contains symbols from dictionary we cannot code it
             return true;
         }

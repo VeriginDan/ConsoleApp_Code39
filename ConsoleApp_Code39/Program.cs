@@ -11,9 +11,12 @@ namespace ConsoleApp_Code39
     {
         static void Main(string[] args)
         {
-            String CodeString = Console.ReadLine().ToUpper();
-
-            buf.Save("qqqqqqqq.png", ImageFormat.Png);
+            Barcode barcode = new BarcodeType39("I am barcode".ToUpper());
+            Bitmap buf = barcode.Image;
+            buf.Save("d:/qqqqq.png", System.Drawing.Imaging.ImageFormat.Png);
+            Barcode barcode1 = new BarcodeType39(barcode.Image);
+            Console.WriteLine(barcode1.Text);
+            Console.ReadKey();
         }
     }
         
